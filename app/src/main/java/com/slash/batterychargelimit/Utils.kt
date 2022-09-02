@@ -5,12 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.BatteryManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.slash.batterychargelimit.Constants.CHARGE_LIMIT_ENABLED
@@ -320,6 +323,9 @@ object Utils {
             Constants.BLACK -> { theme = R.style.AppThemeBlack_NoActionBar }
         }
         activity.setTheme(theme)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            activity.window.statusBarColor = Color.TRANSPARENT
+        }
     }
 
     /**

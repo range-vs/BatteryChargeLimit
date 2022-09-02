@@ -1,5 +1,6 @@
 package com.slash.batterychargelimit.activities
 
+import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
 import android.os.BatteryManager
@@ -17,6 +18,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.slash.batterychargelimit.Constants
 import com.slash.batterychargelimit.Constants.AUTO_RESET_STATS
@@ -100,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         loadUi()
         //The onCreate() process was not stopped via return, UI elements should be available
         initComplete = true
+
     }
 
     private fun showNoRootDialog() {
@@ -282,9 +285,11 @@ class MainActivity : AppCompatActivity() {
                     if (isChecked) {
                         Utils.startServiceIfLimitEnabled(context)
                         disableSwitches(listOf(disableChargeSwitch, limitByVoltageSwitch))
+                        //BatteryStatusBroadcast.sendBroadcast(context, false, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_SWITCH)
                     } else {
                         Utils.stopService(context)
                         enableSwitches(listOf(disableChargeSwitch, limitByVoltageSwitch))
+                        //BatteryStatusBroadcast.sendBroadcast(context, true, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_SWITCH)
                     }
                     EnableWidgetIntentReceiver.updateWidget(context, isChecked)
                 }
@@ -467,5 +472,6 @@ class MainActivity : AppCompatActivity() {
         private val TAG = MainActivity::class.java.simpleName
         const val MSG_UPDATE_VOLTAGE_THRESHOLD = 1
         const val VOLTAGE_THRESHOLD = "voltageThreshold"
+
     }
 }

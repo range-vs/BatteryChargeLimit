@@ -16,6 +16,7 @@ import com.slash.batterychargelimit.Constants.SETTINGS
 import com.slash.batterychargelimit.ForegroundService
 import com.slash.batterychargelimit.R
 import com.slash.batterychargelimit.Utils
+import com.slash.batterychargelimit.receivers.broadcast.BatteryStatusBroadcast
 import com.slash.batterychargelimit.settings.PrefsFragment
 
 
@@ -123,6 +124,9 @@ class BatteryReceiver(private val service: ForegroundService) : BroadcastReceive
                 service.setNotificationIcon(NOTIF_CHARGE)
                 service.setNotificationActionText(service.getString(R.string.disable_temporarily))
                 stopIfUnplugged()
+//                if (context != null) {
+//                    BatteryStatusBroadcast.sendBroadcast(context, true, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_AUTO)
+//                }
             }
         } else if (batteryLevel >= limitPercentage) {
             if (switchState(CHARGE_STOP)) {
@@ -146,6 +150,10 @@ class BatteryReceiver(private val service: ForegroundService) : BroadcastReceive
                         rechargePercentage, limitPercentage))
                 service.setNotificationIcon(NOTIF_MAINTAIN)
                 service.setNotificationActionText(service.getString(R.string.dismiss))
+
+//                if (context != null) {
+//                    BatteryStatusBroadcast.sendBroadcast(context, false, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_AUTO)
+//                }
             } else if (currentStatus == BatteryManager.BATTERY_STATUS_CHARGING
                     && prefs.getBoolean(PrefsFragment.KEY_ENFORCE_CHARGE_LIMIT, true)) {
                 //Double the back off time with every unsuccessful round up to MAX_BACK_OFF_TIME
@@ -168,6 +176,9 @@ class BatteryReceiver(private val service: ForegroundService) : BroadcastReceive
                 service.setNotificationActionText(service.getString(R.string.disable_temporarily))
                 Utils.changeState(service, Utils.CHARGE_ON)
                 stopIfUnplugged()
+//                if (context != null) {
+//                    BatteryStatusBroadcast.sendBroadcast(context, true, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_AUTO)
+//                }
             }
         }
 

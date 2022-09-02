@@ -64,14 +64,14 @@ tools:showIn="@layout/activity_main">
                 android:layout_height="wrap_content">
 
                 <TextView
+                    android:id="@+id/status_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="5dp"
-                    android:id="@+id/status_label"
-                    android:text="@string/status"
-                    android:textSize="16sp"
                     android:layout_marginRight="5dp"
-                    android:textColor="?attr/primaryText"/>
+                    android:text="@string/status"
+                    android:textColor="?attr/primaryText"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -82,31 +82,31 @@ tools:showIn="@layout/activity_main">
                     android:layout_toRightOf="@+id/status_label" />
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
                     android:id="@+id/battery_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_below="@+id/status"
-                    android:textSize="16sp"
-                    android:textColor="?attr/secondaryText" />
+                    android:textColor="?attr/secondaryText"
+                    android:textSize="16sp" />
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_below="@+id/battery_info"
                     android:id="@+id/status_ctrl_data_label"
-                    android:text="@string/status_ctrl_data_label"
-                    android:textSize="16sp"
-                    android:textColor="?attr/primaryText" />
-
-                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_below="@+id/battery_info"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/status_ctrl_data_label"
+                    android:textColor="?attr/primaryText"
+                    android:textSize="16sp" />
+
+                <TextView
                     android:id="@+id/status_ctrl_data"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_below="@+id/status_ctrl_data_label"
-                    android:textSize="16sp"
                     android:text="@string/file_data"
-                    android:textColor="?attr/secondaryText"/>
+                    android:textColor="?attr/secondaryText"
+                    android:textSize="16sp" />
 
             </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>

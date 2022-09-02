@@ -1,11 +1,15 @@
 package com.slash.batterychargelimit
 
-import android.app.PendingIntent
-import android.app.Service
+import android.app.*
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.media.RingtoneManager
+import android.os.Build
 import android.os.IBinder
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.slash.batterychargelimit.Constants.INTENT_DISABLE_ACTION
@@ -15,7 +19,14 @@ import com.slash.batterychargelimit.Constants.NOTIF_MAINTAIN
 import com.slash.batterychargelimit.Constants.SETTINGS
 import com.slash.batterychargelimit.activities.MainActivity
 import com.slash.batterychargelimit.receivers.BatteryReceiver
+import com.slash.batterychargelimit.receivers.broadcast.BatteryStatusBroadcast
 import com.slash.batterychargelimit.settings.PrefsFragment
+import eu.chainfire.libsuperuser.Shell
+import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
+import java.io.InputStreamReader
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 /**
@@ -30,7 +41,7 @@ class ForegroundService : Service() {
 
     private val settings by lazy(LazyThreadSafetyMode.NONE) {this.getSharedPreferences(SETTINGS, 0)}
     private val prefs by lazy(LazyThreadSafetyMode.NONE) {Utils.getPrefs(this)}
-    private val mNotifyBuilder by lazy(LazyThreadSafetyMode.NONE) { NotificationCompat.Builder(this, "Charge Limit State") }
+    private val mNotifyBuilder by lazy(LazyThreadSafetyMode.NONE) { NotificationCompat.Builder(this, createNotificationBuilder()) }
     private var notifyID = 1
     private var autoResetActive = false
     private var batteryReceiver: BatteryReceiver? = null
@@ -42,8 +53,72 @@ class ForegroundService : Service() {
         autoResetActive = true
     }
 
+    private fun createNotificationBuilder(): String{
+        val channelId =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    createNotificationChannel("service_charge_limit_state", "Charge Limit State")
+                } else {
+                    // If earlier version channel ID is not used
+                    // https://developer.android.com/reference/android/support/v4/app/NotificationCompat.Builder.html#NotificationCompat.Builder(android.content.Context)
+                    ""
+                }
+        return channelId
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel(channelId: String, channelName: String): String{
+        val chan = NotificationChannel(channelId,
+                channelName, NotificationManager.IMPORTANCE_NONE)
+        chan.lightColor = Color.BLUE
+        chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        service.createNotificationChannel(chan)
+        return channelId
+    }
+
+    private fun initThreadPowerConnectionOrDisconnection(){
+            Thread {
+                var suShell: Shell.Interactive = Shell.Builder().setWantSTDERR(false).useSU().open()
+                val path = Utils.getCtrlFileData(this)
+                var startCommand = arrayOf("mount -o rw,remount $path", "chmod u+w $path")
+                suShell.addCommand(startCommand)
+                var oldValue = -10
+                while(isThreadPowerReceiverRunning.get()) {
+                    val file = File(path)
+                    if (file.exists()) {
+                        suShell.addCommand("cat $path", 0) { _, _, output ->
+                            val text = output[0]
+                            var value = text.toInt()
+                            if(oldValue != value || oldValue == -10) {
+                                value = oldValue
+                                if (value == 0) {
+                                    BatteryStatusBroadcast.sendBroadcast(this, false, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_AUTO)
+                                } else if (value == 1) {
+                                    BatteryStatusBroadcast.sendBroadcast(this, true, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_AUTO)
+                                }
+                            }
+                        }
+                        /*val text = file.readText()
+                        var value = text.toInt()
+                        if(oldValue != value || oldValue == -10) {
+                            value = oldValue
+                            if (value == 0) {
+                                BatteryStatusBroadcast.sendBroadcast(this, false, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_AUTO)
+                            } else if (value == 1) {
+                                BatteryStatusBroadcast.sendBroadcast(this, true, BatteryStatusBroadcast.BATTERY_CHANGE_STATUS_LOCATION_AUTO)
+                            }
+                        }*/
+                    }
+                    Thread.sleep(60000) // wait min
+                }
+            }.start()
+    }
+
     override fun onCreate() {
         isRunning = true
+
+        //isThreadPowerReceiverRunning.set(true)
+        //initThreadPowerConnectionOrDisconnection()
 
         notifyID = 1
         settings.edit().putBoolean(NOTIFICATION_LIVE, true).apply()
@@ -126,6 +201,8 @@ class ForegroundService : Service() {
         batteryReceiver = null
 
         isRunning = false
+
+        //isThreadPowerReceiverRunning.set(false)
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -139,6 +216,7 @@ class ForegroundService : Service() {
          * @return Whether service is running
          */
         var isRunning = false
+        var isThreadPowerReceiverRunning = AtomicBoolean(false)
         private var ignoreAutoReset = false
 
         /**
